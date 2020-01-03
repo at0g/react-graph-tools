@@ -7,7 +7,7 @@ export default function MoveableContainer (props) {
     const [setRef, state] = useMouseContainer();
     return (
         <context.Provider value={state}>
-            <section {...spread} ref={setRef}>
+            <section {...spread} ref={setRef} style={{ flex: '1 1 100%' }}>
                 {children}
             </section>
         </context.Provider>
