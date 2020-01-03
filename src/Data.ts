@@ -6,6 +6,10 @@ export interface Layout {
     height: number
     zIndex: number
 }
+export type GraphLayout = {
+    scale: number
+} & Layout
+
 export interface Port {
     type: 'input' | 'output' | 'none'
     name: string
@@ -21,7 +25,7 @@ export interface Edge {
     to:   [string, string]
 }
 export interface Graph {
-    layout: Layout
+    layout: GraphLayout
     nodes: Node[]
     edges: Edge[]
 }
@@ -33,7 +37,8 @@ export const createGraphData = (): Graph => ({
         y:      0, 
         width:  216, 
         height: 100, 
-        zIndex: 0 
+        zIndex: 0,
+        scale: 1
     },
     nodes: [
         {
@@ -41,11 +46,7 @@ export const createGraphData = (): Graph => ({
             name: 'A',
             ports:  [
                 { type: 'input',  name: 'a'}, 
-                { type: 'input',  name: 'b'}, 
-                { type: 'input',  name: 'c'}, 
-                { type: 'output', name: 'd'}, 
-                { type: 'output', name: 'e'}, 
-                { type: 'output', name: 'f'}, 
+                { type: 'output',  name: 'b'}, 
             ],
             layout: { 
                 x:      10, 
@@ -60,11 +61,7 @@ export const createGraphData = (): Graph => ({
             name: 'B',
             ports:  [
                 { type: 'input',  name: 'a'}, 
-                { type: 'input',  name: 'b'}, 
-                { type: 'input',  name: 'c'}, 
-                { type: 'output', name: 'd'}, 
-                { type: 'output', name: 'e'}, 
-                { type: 'output', name: 'f'}, 
+                { type: 'output',  name: 'b'}, 
             ],
             layout: { 
                 x:      250, 
@@ -79,11 +76,7 @@ export const createGraphData = (): Graph => ({
             name: 'C',
             ports:  [
                 { type: 'input',  name: 'a'}, 
-                { type: 'input',  name: 'b'}, 
-                { type: 'input',  name: 'c'}, 
-                { type: 'output', name: 'd'}, 
-                { type: 'output', name: 'e'}, 
-                { type: 'output', name: 'f'}, 
+                { type: 'output',  name: 'b'}, 
             ],
             layout: { 
                 width:  256,

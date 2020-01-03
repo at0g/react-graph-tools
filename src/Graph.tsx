@@ -8,22 +8,19 @@ import { Graph, Node } from './Data'
 
 export interface NodeElementProperties {
     onNodeHeaderMouseDown: (node: Node, event: React.MouseEvent) => void
-    onNodeHeaderMouseUp:   (node: Node, event: React.MouseEvent) => void
     graph: Graph,
     node:  Node
 }
 export function NodeElement(props: NodeElementProperties) {
     return <div className='node' style={{
+        transform: `translate(${props.node.layout.x}px, ${props.node.layout.y}px)`,
         width:  props.node.layout.width,
         height: props.node.layout.height,
-        left:   props.node.layout.x + props.graph.layout.x,
-        top:    props.node.layout.y + props.graph.layout.y,
-        zIndex: props.node.layout.zIndex
+        zIndex: props.node.layout.zIndex,
     }}>
-        <div className='node-header'
-            onMouseDown= {e => props.onNodeHeaderMouseDown(props.node, e)}
-            onMouseUp  = {e => props.onNodeHeaderMouseUp(props.node, e)}
-        >{props.node.name}</div>
+        <div className='node-header' onMouseDown= {e => props.onNodeHeaderMouseDown(props.node, e)}>
+            {props.node.name}
+        </div>
         <div className='node-body'>
             Todo: Draggable Ports
         </div>
@@ -38,97 +35,86 @@ export function NodeElement(props: NodeElementProperties) {
 export interface GraphElementState {
     graph: Graph
     draggable: {
-        delta: { x: number, y: number } // mouse pos - target pos
         target: Node | Graph | null
     }
 }
 export interface GraphElementProperties {
+    onGraphChange: (graph: Graph) => void
     graph: Graph
 }
 export function GraphElement(props: GraphElementProperties) {
-    const [state, setState] = React.useState<GraphElementState>({
-        graph: {...props.graph},
+    const [state, _setState] = React.useState<GraphElementState>({
+        graph: { ...props.graph },
         draggable: {
-            delta: { x: 0, y: 0 },
-            target:   null,
+            target: null
         }
     })
 
+    // Intercept all state changes and emit updated state.
+    function setState(state: GraphElementState) {
+        props.onGraphChange({...state.graph})
+        _setState(state)
+    }
+
     function onMouseMove (e: React.MouseEvent) {
         if(state.draggable.target !== null) {
-            state.draggable.target.layout.x = e.clientX - state.draggable.delta.x
-            state.draggable.target.layout.y = e.clientY - state.draggable.delta.y
-
-            // todo: There is a problem here in that, just blindly setting the
-            // state in this fashion results in 'all' nodes being redrawn, even
-            // tho only one node is being mutated. Is there a better way to
-            // partition the 'state' so that only nodes that update get
-            // re-drawn? For a mousemove, that may be prohibitively expensive.
-            setState({...state})
+            // note: calculate the actual delta from the device pixel ratio and 
+            // the current scale of the graph layout. We shift the target by the
+            // given deltas. (Better than tracking via clientXY positions.)
+            const deltaX = e.movementX / (window.devicePixelRatio * state.graph.layout.scale)
+            const deltaY = e.movementY / (window.devicePixelRatio * state.graph.layout.scale)
+            state.draggable.target.layout.x += deltaX
+            state.draggable.target.layout.y += deltaY
+            setState({ ...state })
         }
     }
 
     function onMouseDown (e: React.MouseEvent) {
+        e.stopPropagation()
         state.draggable = {
-            target: state.graph,
-            delta: {
-                x: e.clientX - state.graph.layout.x ,
-                y: e.clientY - state.graph.layout.y
-            }
+            target: state.graph
         }
+        setState({ ...state })   
     }
 
     function onMouseUp (e: React.MouseEvent) {
         state.draggable = {
-            target: null,
-            delta: {
-                x: 0,
-                y: 0
-            }
+            target: null
         }
     }
     
     function onNodeHeaderMouseDown (node: Node, e: React.MouseEvent) {
-        // Compute the top most z-index of 'all' the nodes. Note, that
-        // the node passed on this event is one of the nodes in this
-        // graphs state. We set (top+1) which is mutating a reference
-        // to the node in the current state.
+        e.stopPropagation()
         const top = state.graph.nodes.reduce((acc, node) => node.layout.zIndex > acc ? node.layout.zIndex : acc, 0)
         node.layout.zIndex = (top + 1)
         state.draggable = {
-            target: node,
-            delta: {
-                x: e.clientX - node.layout.x,
-                y: e.clientY - node.layout.y
-            }
+            target: node
         }
-        setState({ ...state })        
+        setState({ ...state })
     }
-    
-    function onNodeHeaderMouseUp (node: Node, e: React.MouseEvent) {
-        // Note: Same as Graph.onMouseUp()
-        //
-        // state.draggable = {
-        //     target: null,
-        //     delta: {
-        //         x: 0,
-        //         y: 0
-        //     }
-        // }
-        // setState({ ...state })    
+
+    function onWheel(e: React.WheelEvent) {
+        const current = state.graph.layout.scale
+        const delta   = e.deltaY * 0.001
+        state.graph.layout.scale = (current + delta <= 0) ? current : current + delta
+        setState({ ...state})
     }
 
     const nodes = state.graph.nodes.map(node => (
         <NodeElement key={node.id} graph={state.graph} node={node} 
-            onNodeHeaderMouseDown={onNodeHeaderMouseDown}
-            onNodeHeaderMouseUp={onNodeHeaderMouseUp} />
+            onNodeHeaderMouseDown={onNodeHeaderMouseDown} />
     ))
     return <div className='graph'
         onMouseDown={onMouseDown}
         onMouseUp={onMouseUp}
         onMouseMove={onMouseMove}
+        onWheel={onWheel}
     >
-        {nodes}
+        <div className='graph-scale' style={{transform: `scale(${state.graph.layout.scale})`}}>
+            <div className='graph-translate' style={{transform: `translate(${state.graph.layout.x}px, ${state.graph.layout.y}px)`}}>
+                {nodes}
+            </div>
+        </div>
     </div>
 }
 

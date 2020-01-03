@@ -6,14 +6,21 @@ job could be done here.
 */
 
 /** GRAPH ELEMENT */
-
+.graph-translate {
+    width: 100%;
+    height: 100%;
+}
+.graph-scale {
+    width: 100%;
+    height: 100%;
+}
 .graph {
-    position:    relative;
+
     background: #EEE;
     display:     block;
     overflow:    hidden;
-    width:       512px;
-    height:      512px;
+    width:       100%;
+    height:      100%;
     border:      1px solid;
     cursor:      grab;
 }
@@ -45,6 +52,7 @@ job could be done here.
     color:      white;
 }
 .node {
+
     position:              relative;
     display:               grid;
     grid-template-columns: 100%;
@@ -56,6 +64,7 @@ job could be done here.
     border-radius:  8px;
     border:         1px solid;
     overflow:       hidden;
+    box-shadow: 6px 6px 3px #AAA;
 }
 
 
