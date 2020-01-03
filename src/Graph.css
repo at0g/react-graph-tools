@@ -1,0 +1,61 @@
+/** 
+Apoligies for the rather rough looking CSS. Note sure what belongs
+inside the CSS and what belongs as React bound styles. I've dropped some
+rough looking styles to give the appearance of 'nodes', but sure a better
+job could be done here.
+*/
+
+/** GRAPH ELEMENT */
+
+.graph {
+    position:    relative;
+    background: #EEE;
+    display:     block;
+    overflow:    hidden;
+    width:       512px;
+    height:      512px;
+    border:      1px solid;
+    cursor:      grab;
+}
+
+/** NODE ELEMENT */
+
+.node-header {
+    grid-area:    header;
+    width:        100%;
+    height:       100%;
+    cursor:       grabbing;
+    padding-left: 10px;
+    padding-top:  5px;
+    background: gray;
+    color:      white;
+}
+.node-body {
+    grid-area:    body;
+    cursor:       default;
+
+    background: #333;
+    color:      white;
+}
+.node-footer {
+    grid-area:   footer;
+    overflow:    hidden;
+
+    background: gray;
+    color:      white;
+}
+.node {
+    position:              relative;
+    display:               grid;
+    grid-template-columns: 100%;
+    grid-template-rows:    32px auto 16px;
+    grid-template-areas: 
+      "header"
+      "body"
+      "footer";
+    border-radius:  8px;
+    border:         1px solid;
+    overflow:       hidden;
+}
+
+
