@@ -95,7 +95,7 @@ export function GraphElement(props: GraphElementProperties) {
 
     function onWheel(e: React.WheelEvent) {
         const current = state.graph.layout.scale
-        const delta   = e.deltaY * 0.001
+        const delta   = e.deltaY > 1 ? -0.25 : 0.25
         state.graph.layout.scale = (current + delta <= 0) ? current : current + delta
         setState({ ...state})
     }
