@@ -7,27 +7,33 @@ import { Graph, Node, Port } from './Data'
 // ------------------------------------------------------------------
 
 export interface InputPortElementProperties {
+    onInputMouseUp: (port: Port, event: React.MouseEvent) => void
     port: Port
 }
 export function InputPortElement(props: InputPortElementProperties) {
     return <div className='port'>
         <div className='port-left'>
-            <div className='port-connector'></div>
+            <div className='port-connector'
+                onMouseUp={e => props.onInputMouseUp(props.port, e)}
+            ></div>
         </div>
-        <div className='port-middle'>{props.port.name}</div>
+        <div className='port-middle noselect'>{props.port.name}</div>
         <div className='port-right'></div>
     </div>
 }
 
 export interface OutputPortElementProperties {
+    onOutputMouseDown: (port: Port, event: React.MouseEvent) => void
     port: Port
 }
-export function OutputPortElement(props: InputPortElementProperties) {
+export function OutputPortElement(props: OutputPortElementProperties) {
     return <div className='port'>
         <div className='port-left'></div>
-        <div className='port-middle'>{props.port.name}</div>
+        <div className='port-middle noselect'>{props.port.name}</div>
         <div className='port-right'>
-            <div className='port-connector'></div>
+            <div className='port-connector'
+                onMouseDown={e => props.onOutputMouseDown(props.port, e)}
+            ></div>
         </div>
     </div>
 }
@@ -37,7 +43,9 @@ export function OutputPortElement(props: InputPortElementProperties) {
 // ------------------------------------------------------------------
 
 export interface NodeElementProperties {
-    onNodeHeaderMouseDown: (node: Node, event: React.MouseEvent) => void
+    onNodeHeaderMouseDown: (node: Node, event: React.MouseEvent) => void,
+    onInputMouseUp:        (node: Node, port: Port, event: React.MouseEvent) => void
+    onOutputMouseDown:     (node: Node, port: Port, event: React.MouseEvent) => void
     graph: Graph,
     node:  Node
 }
@@ -45,25 +53,18 @@ export function NodeElement(props: NodeElementProperties) {
 
     const ports = props.node.ports.map(port => {
         switch(port.type) {
-            case 'input': return <InputPortElement key={port.name} port={port} />
-            case 'output': return <OutputPortElement key={port.name} port={port} />
+            case 'input':  return <InputPortElement  key={port.name} port={port} onInputMouseUp   ={(port, event) => props.onInputMouseUp(props.node, port, event)} />
+            case 'output': return <OutputPortElement key={port.name} port={port} onOutputMouseDown={(port, event) => props.onOutputMouseDown(props.node, port, event)} />
             default: return null
         }
     })
 
     return <div className='node' style={{
         transform: `translate(${props.node.layout.x}px, ${props.node.layout.y}px)`,
-        width:  props.node.layout.width,
-        // note: The explicit height interferes with the default 'auto'
-        // layout of arbituary numbers of ports. Have commented for the
-        // time being. I think it would be cool to be able to resize
-        // the nodes, but not sure how to approach that with the 
-        // current setup. For consideration.
-
-        // height: props.node.layout.height,
-        zIndex: props.node.layout.zIndex,
+        width:     props.node.layout.width,
+        zIndex:    props.node.layout.zIndex,
     }}>
-        <div className='node-header' onMouseDown= {e => props.onNodeHeaderMouseDown(props.node, e)}>
+        <div className='node-header noselect' onMouseDown= {e => props.onNodeHeaderMouseDown(props.node, e)}>
             {props.node.name}
         </div>
         <div className='node-body'>
@@ -81,6 +82,11 @@ export interface GraphElementState {
     graph: Graph
     draggable: {
         target: Node | Graph | null
+    },
+    connector: {
+        active: boolean
+        from: { x: number, y: number }
+        to:   { x: number, y: number }
     }
 }
 export interface GraphElementProperties {
@@ -92,6 +98,11 @@ export function GraphElement(props: GraphElementProperties) {
         graph: { ...props.graph },
         draggable: {
             target: null
+        },
+        connector: {
+            active: false,
+            from: { x: 0, y: 0 },
+            to:   { x: 0, y: 0 }
         }
     })
 
@@ -112,30 +123,49 @@ export function GraphElement(props: GraphElementProperties) {
             state.draggable.target.layout.y += deltaY
             setState({ ...state })
         }
+
+        if(state.connector.active) {
+            const deltaX = e.movementX / (window.devicePixelRatio * state.graph.layout.scale)
+            const deltaY = e.movementY / (window.devicePixelRatio * state.graph.layout.scale)
+            state.connector.to.x += deltaX
+            state.connector.to.y += deltaY
+            setState({ ...state })
+        }
     }
 
     function onMouseDown (e: React.MouseEvent) {
         e.stopPropagation()
-        state.draggable = {
-            target: state.graph
-        }
+        state.draggable.target = state.graph
         setState({ ...state })   
     }
 
     function onMouseUp (e: React.MouseEvent) {
-        state.draggable = {
-            target: null
-        }
+        state.draggable.target = null
+        state.connector.active = false
+        setState({ ...state })
     }
     
     function onNodeHeaderMouseDown (node: Node, e: React.MouseEvent) {
         e.stopPropagation()
         const top = state.graph.nodes.reduce((acc, node) => node.layout.zIndex > acc ? node.layout.zIndex : acc, 0)
         node.layout.zIndex = (top + 1)
-        state.draggable = {
-            target: node
-        }
+        state.draggable.target = node
         setState({ ...state })
+    }
+
+    function onNodeInputMouseUp(node: Node, port: Port, e: React.MouseEvent) {
+        console.log('input: mouseup')
+        console.log(node, port)
+    }
+
+    function onNodeOutputMouseDown(node: Node, port: Port, e: React.MouseEvent) {
+        e.stopPropagation()        
+        state.connector.from.x = e.clientX
+        state.connector.from.y = e.clientY
+        state.connector.to.x   = e.clientX
+        state.connector.to.y   = e.clientY
+        state.connector.active = true
+        setState({...state})
     }
 
     function onWheel(e: React.WheelEvent) {
@@ -145,18 +175,27 @@ export function GraphElement(props: GraphElementProperties) {
         setState({ ...state})
     }
 
+    const connector = state.connector.active ? (
+        <svg style={{width: '100%', height: '100%', position: 'fixed'}} xmlns="http://www.w3.org/2000/svg">
+            <line x1={state.connector.from.x} y1={state.connector.from.y} x2={state.connector.to.x} y2={state.connector.to.y} style={{stroke:'#333', strokeWidth:2 }} />
+        </svg>
+    ) : null;
+
     const nodes = state.graph.nodes.map(node => (
-        <NodeElement key={node.id} graph={state.graph} node={node} 
-            onNodeHeaderMouseDown={onNodeHeaderMouseDown} />
+        <NodeElement key={node.id} graph={state.graph} node={node}
+            onNodeHeaderMouseDown={onNodeHeaderMouseDown}    
+            onInputMouseUp={onNodeInputMouseUp}
+            onOutputMouseDown={onNodeOutputMouseDown}
+        />
     ))
     return <div className='graph'
+        onMouseMove={onMouseMove}    
         onMouseDown={onMouseDown}
         onMouseUp={onMouseUp}
-        onMouseMove={onMouseMove}
-        onWheel={onWheel}
-    >
+        onWheel={onWheel}>
         <div className='graph-scale' style={{transform: `scale(${state.graph.layout.scale})`}}>
             <div className='graph-translate' style={{transform: `translate(${state.graph.layout.x}px, ${state.graph.layout.y}px)`}}>
+                {connector}
                 {nodes}
             </div>
         </div>
