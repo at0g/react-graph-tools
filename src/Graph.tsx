@@ -45,9 +45,9 @@ export function NodeElement(props: NodeElementProperties) {
 
     const ports = props.node.ports.map(port => {
         switch(port.type) {
-            case 'input': return <InputPortElement port={port} />
-            case 'output': return <OutputPortElement port={port} />
-            return null
+            case 'input': return <InputPortElement key={port.name} port={port} />
+            case 'output': return <OutputPortElement key={port.name} port={port} />
+            default: return null
         }
     })
 
@@ -59,7 +59,7 @@ export function NodeElement(props: NodeElementProperties) {
         // time being. I think it would be cool to be able to resize
         // the nodes, but not sure how to approach that with the 
         // current setup. For consideration.
-        
+
         // height: props.node.layout.height,
         zIndex: props.node.layout.zIndex,
     }}>
