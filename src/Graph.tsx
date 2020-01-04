@@ -1,6 +1,36 @@
 import './Graph.css'
-import React           from 'react'
-import { Graph, Node } from './Data'
+import React                 from 'react'
+import { Graph, Node, Port } from './Data'
+
+// ------------------------------------------------------------------
+// Port Elements | Input | Output
+// ------------------------------------------------------------------
+
+export interface InputPortElementProperties {
+    port: Port
+}
+export function InputPortElement(props: InputPortElementProperties) {
+    return <div className='port'>
+        <div className='port-left'>
+            <div className='port-connector'></div>
+        </div>
+        <div className='port-middle'>{props.port.name}</div>
+        <div className='port-right'></div>
+    </div>
+}
+
+export interface OutputPortElementProperties {
+    port: Port
+}
+export function OutputPortElement(props: InputPortElementProperties) {
+    return <div className='port'>
+        <div className='port-left'></div>
+        <div className='port-middle'>{props.port.name}</div>
+        <div className='port-right'>
+            <div className='port-connector'></div>
+        </div>
+    </div>
+}
 
 // ------------------------------------------------------------------
 // Node Element
@@ -12,17 +42,32 @@ export interface NodeElementProperties {
     node:  Node
 }
 export function NodeElement(props: NodeElementProperties) {
+
+    const ports = props.node.ports.map(port => {
+        switch(port.type) {
+            case 'input': return <InputPortElement port={port} />
+            case 'output': return <OutputPortElement port={port} />
+            return null
+        }
+    })
+
     return <div className='node' style={{
         transform: `translate(${props.node.layout.x}px, ${props.node.layout.y}px)`,
         width:  props.node.layout.width,
-        height: props.node.layout.height,
+        // note: The explicit height interferes with the default 'auto'
+        // layout of arbituary numbers of ports. Have commented for the
+        // time being. I think it would be cool to be able to resize
+        // the nodes, but not sure how to approach that with the 
+        // current setup. For consideration.
+        
+        // height: props.node.layout.height,
         zIndex: props.node.layout.zIndex,
     }}>
         <div className='node-header' onMouseDown= {e => props.onNodeHeaderMouseDown(props.node, e)}>
             {props.node.name}
         </div>
         <div className='node-body'>
-            Todo: Draggable Ports
+            {ports}
         </div>
         <div className='node-footer' />
     </div>

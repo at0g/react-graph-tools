@@ -43,10 +43,10 @@ export const createGraphData = (): Graph => ({
     nodes: [
         {
             id:   'A',
-            name: 'A',
+            name: 'Foo',
             ports:  [
-                { type: 'input',  name: 'a'}, 
-                { type: 'output',  name: 'b'}, 
+                { type: 'input',  name: 'input_a'}, 
+                { type: 'output',  name: 'output_b'}, 
             ],
             layout: { 
                 x:      10, 
@@ -58,10 +58,14 @@ export const createGraphData = (): Graph => ({
         },
         {
             id:   'B',
-            name: 'B',
+            name: 'Bar',
             ports:  [
-                { type: 'input',  name: 'a'}, 
-                { type: 'output',  name: 'b'}, 
+                { type: 'input',  name: 'input_a'}, 
+                { type: 'input',  name: 'input_b'}, 
+                { type: 'input',  name: 'input_c'}, 
+                { type: 'output',  name: 'output_d'}, 
+                { type: 'output',  name: 'output_e'}, 
+                { type: 'output',  name: 'output_f'}, 
             ],
             layout: { 
                 x:      250, 
@@ -73,10 +77,10 @@ export const createGraphData = (): Graph => ({
         },
         {
             id:   'C',
-            name: 'C',
+            name: 'Baz',
             ports:  [
-                { type: 'input',  name: 'a'}, 
-                { type: 'output',  name: 'b'}, 
+                { type: 'input',  name: 'input_a'}, 
+                { type: 'output',  name: 'output_b'}, 
             ],
             layout: { 
                 width:  256,
